@@ -7,10 +7,11 @@ import requests
 import sparql_dataframe
 
 # import json
-# import os
+import os
 import re
 from typing import Literal, get_args
-from bs4 import BeautifulSoup as bs
+from bs4 import BeautifulSoup
+from pdfminer.high_level import extract_text
 import pandas as pd
 from halo import Halo
 from fire import Fire
@@ -37,6 +38,7 @@ class Eurlex:
         "recommendation",
         "international_agreement",  # AGREE_INTERNATION
         "caselaw",
+        "caselaw_proper",
         "ag_opinion",  # Advocate General Opinion (OPIN_AG)
         "manual",
         "proposal",
@@ -83,7 +85,7 @@ class Eurlex:
         Parameters
         ----------
         resource_type: _RESOURCE_TYPES
-            Defines the most common resources supported, mapping to one or more resource types in the EU semantic data structure. Possible options are any, directive, regulation, decision ,recommendation, international_agreement, caselaw, ag_opinion, manual, proposal, national_implementation
+            Defines the most common resources supported, mapping to one or more resource types in the EU semantic data structure. Possible options are any, directive, regulation, decision ,recommendation, international_agreement, caselaw, caselaw_proper, ag_opinion, manual, proposal, national_implementation
             Default: caselaw
         manual_type: string
             A string that specifies a custom resource type as set out in official documentation, if pre-defined resource types are not sufficient. Possible types can be found here: http://publications.europa.eu/resource/authority/resource-type This is a string that is inserted into the query, so it is possible to specify multiple types, but this is not checked for validity.
@@ -170,11 +172,14 @@ class Eurlex:
         --------
         >>> from eurlex import Eurlex
         >>> eur = Eurlex()
-        >>> eur.make_query(resource_type = "directive", include_advocate_general = False, include_ecli = False) #doctest: +ELLIPSIS
+        >>> eur.make_query(resource_type = "directive", include_advocate_general = False, include_ecli = False) # doctest: +ELLIPSIS +NORMALIZE_WHITESPACE
         PREFIX ...
-        >>> eur.make_query(resource_type = "caselaw", order = True, limit = 10)
-        >>> eur.make_query(resource_type = "ag_opinion", order = True, limit = 10)
-        >>> eur.make_query(resource_type = "manual", manual_type = "SWD")
+        >>> eur.make_query(resource_type = "caselaw", order = True, limit = 10) # doctest: +ELLIPSIS
+        PREFIX ...
+        >>> eur.make_query(resource_type = "ag_opinion", order = True, limit = 10) # doctest: +ELLIPSIS
+        PREFIX ...
+        >>> eur.make_query(resource_type = "manual", manual_type = "SWD") # doctest: +ELLIPSIS
+        PREFIX ...
         """
         spinner = Halo(text="Appending query text...", spinner="line")
         spinner.start()
@@ -330,10 +335,10 @@ class Eurlex:
   ?type=<http://publications.europa.eu/resource/authority/resource-type/RULING>||
   ?type=<http://publications.europa.eu/resource/authority/resource-type/JUDG_EXTRACT>||
   ?type=<http://publications.europa.eu/resource/authority/resource-type/INFO_JUDICIAL>)"""
-        # Compared to R-Packages, AG Docs are not part of Case Law
-        """||
-        ?type=<http://publications.europa.eu/resource/authority/resource-type/VIEW_AG>||
-        ?type=<http://publications.europa.eu/resource/authority/resource-type/OPIN_AG>)"""
+        if resource_type == "caselaw_proper":
+            query += """ FILTER(?type=<http://publications.europa.eu/resource/authority/resource-type/JUDG>||
+  ?type=<http://publications.europa.eu/resource/authority/resource-type/ORDER>||
+  ?type=<http://publications.europa.eu/resource/authority/resource-type/RULING>||)"""
         if resource_type == "ag_opinion":
             query += """ FILTER(?type=<http://publications.europa.eu/resource/authority/resource-type/VIEW_AG>||
             ?type=<http://publications.europa.eu/resource/authority/resource-type/OPIN_AG>)"""
@@ -455,7 +460,6 @@ class Eurlex:
         query += """ FILTER not exists{?work cdm:do_not_index "true"^^<http://www.w3.org/2001/XMLSchema#boolean>}."""
         if order:
             query += """} order by str(?date)"""
-            print("added order")
             # TODO - add option to order by different fields
         else:
             # This adds the closing curly braces to the query
@@ -495,16 +499,316 @@ class Eurlex:
         spinner = Halo(text="Querying EU SPARQL endpoint ...", spinner="line")
         spinner.start()
         df = pd.DataFrame()
+        # sparql.setReturnFormat(JSON)
+        # convert?
         try:
             df = sparql_dataframe.get(endpoint, query)
         except Exception as e:
             print("There was an error when performing the query: ", e)
-            # todo - add proper exception // SPARQLWrapper.SPARQLExceptions.QueryBadFormed
-            # urllib.error.HTTPError: HTTP Error 400: Bad Request
         spinner.stop()
         return df
 
+    notice_type: Literal = ["tree", "branch", "object"]
 
+    "Downloads an XML notice of a given type, based on a Cellar resource"
+    # TODO consolidate the repetitive parts of get_data and download_xml
+    def download_xml(
+        self,
+        url: str,
+        notice: notice_type = "object",
+        filename: str = None,
+        languages: list = ["en", "fr", "de"],
+        mode: str = "wb",
+    ):
+        """Downloads the XML notice for a given notice type, when supplied with a URL or CELEX number.
+        Parameters
+        ----------
+        url: str
+            The URL or CELEX number of the notice to download
+        notice: str
+            The type of notice to download. Can be one of "tree", "branch", "object"
+        Default: "object"
+        filename: str
+            The filename to save the XML notice to. If not supplied, the filename will be the CELEX number
+        Default: None
+        languages: list
+            A list of languages to download the notice in. If the notice is not available in the language, it will be skipped.
+        Default: ["en", "fr", "de"]
+        mode: str
+            The mode to open the file in.
+        Default: "wb"
+
+        Returns
+        -------
+        None
+
+        Examples
+        --------
+        >>> from eurlex import Eurlex
+        >>> eur = Eurlex()
+        >>> eur.download_xml("http://publications.europa.eu/resource/celex/32016R0679", notice="object", filename="test.xml")
+        >>> eur.download_xml("32016R0679", notice="object", filename="test.xml")
+        >>> eur.download_xml("32014R0001", notice="tree")
+        >>> eur.download_xml("32014R0001", notice="branch")
+        """
+        assert url, "URL has to be specified"
+        filename = os.path.basename(url)
+        assert notice, "Notice type has to be specified"
+        assert (
+            notice in self.notice_type
+        ), "Notice type must be set as one of {}".format(self.notice_type)
+        language_header = ""
+        for lang in range(0, len(languages)):
+            if lang == 0:
+                language_header += languages[0] + ", "
+            elif lang == 1:
+                language_header += languages[1] + ";q=0.8, "
+            elif lang == 2:
+                language_header += languages[2] + ";q=0.7"
+            else:
+                print("Only three languages at a time are supported")
+        print("The language header is: {}".format(language_header))
+        if (url[:4] == "http" and re.fullmatch(".*cellar.*", url)) or (
+            url[:4] == "http" and re.fullmatch(".*celex.*", url)
+        ):
+            print(
+                "Assuming URL to be a valid, http based EU Cellar resource: {}".format(
+                    url
+                )
+            )
+        else:
+            # Additional testing?
+            # if (stringr::str_detect(url,"celex.*[\\(|\\)|\\/]")){
+            # assume it is a CELEX number
+            url = "http://publications.europa.eu/resource/celex/" + url
+            print("The CELEX url is: {}".format(url))
+        accept_header = "application/xml; notice=" + notice
+        if notice == "object":
+            head = requests.head(
+                # redirects to cellar url so redirects are necessary
+                url,
+                headers={"Accept": accept_header},
+                allow_redirects=True,
+            )
+        else:
+            head = requests.head(
+                url,
+                headers={"Accept-Language": language_header, "Accept": accept_header},
+                allow_redirects=True,
+            )
+        assert head.status_code == 200, "The http request was unsuccessful {}".format(
+            head.status_code
+        )
+        file_content = requests.get(head.url).content
+        with open(filename, mode) as writer:
+            writer.write(file_content)
+        # TODO alternatively, offer to return instead of saving to file (or make separate function)
+
+    data_type: Literal = ["title", "text", "id", "notices"]
+
+    "Download data/documents from EU Cellar based on a given resource URL"
+
+    def get_data(
+        self,
+        url,
+        type: data_type,
+        notice: notice_type = None,
+        languages: list = ["en", "fr", "de"],
+        include_breaks: bool = False,
+    ):
+        """This function takes a URL or Celex number and returns data, such as the title, text, the id, or notices.
+        Parameters
+        ----------
+        url
+            The URL or CELEX number to download/access
+        Returns
+        -------
+            out: The relevant response as str
+        Examples
+        --------
+        >>> from eurlex import Eurlex
+        >>> eur = Eurlex()
+        >>> eur.get_data("http://publications.europa.eu/resource/celex/32016R0679", type = "text")
+        >>> eur.get_data("32016R0679")
+        >>> eur.get_data("32014R0001")
+        """
+
+        assert url, "The URL or CELEX number is necessary to retrieve data"
+        assert (
+            type
+        ), "The type of the data to be parsed is necessary"  # TODO - maybe just parse all in one go?
+        assert (
+            type in self.data_type
+        ), "The type of data to be parsed has to be one of title, text, id or notices"
+        assert (
+            type == "notice" and notice != None or type != notice
+        ), "The type of notice to be processed has to be provided"
+        # TODO
+        # Ok, it is a bit weird to filter language not in CELLAR but in http header
+        language_header = ""
+        for lang in range(0, len(languages)):
+            if lang == 0:
+                language_header += languages[0] + ", "
+            elif lang == 1:
+                language_header += languages[1] + ";q=0.8, "
+            elif lang == 2:
+                language_header += languages[2] + ";q=0.7"
+            else:
+                print("Only three languages at a time are supported")
+
+        print("The language header is: {}".format(language_header))
+        if url[:4] == "http" and re.fullmatch(".*cellar.*", url):
+            print("Assuming URL to be a valid, http based EU Cellar resource")
+        else:
+            # TODO - Add additional testing?
+            # if (stringr::str_detect(url,"celex.*[\\(|\\)|\\/]")){
+            # assume it is a CELEX number
+            url = "http://publications.europa.eu/resource/celex/" + url
+            print("The CELEX url is: {}".format(url))
+
+        if type == "title":
+            try:
+                print("Getting title data...")
+                response = requests.get(
+                    url,
+                    headers={
+                        "Accept-Language": language_header,
+                        "Accept": "application/xml; notice=object",
+                    },
+                )
+            except Exception as e:
+                print("There was an error during data retrieval: {}", e)
+            if response.status_code == 200:
+                html = BeautifulSoup(response.text, "xml.parser")
+                out += (
+                    html.find_next("//EXPRESSION_TITLE").find_next("VALUE").get_text()
+                )
+            else:
+                print("No content retrieved: {}", response.status_code)
+        if type == "text":
+            try:
+                print("Getting text data...")
+                response = requests.get(
+                    url,
+                    headers={
+                        "Accept-Language": language_header,
+                        "Content-Language": language_header,
+                        "Accept": "text/html, text/html;type=simplified, text/plain, application/xhtml+xml, application/xhtml+xml;type=simplified, application/pdf, application/pdf;type=pdf1x, application/pdf;type=pdfa1a, application/pdf;type=pdfx, application/pdf;type=pdfa1b, application/msword",
+                    },
+                )
+            except Exception as e:
+                print("There was an error during gathering data: {}", e)
+
+            if response.status_code == 200:
+                print("Got a {} reponse, great!".format(response.status_code))
+                out = self.read_data(response)
+            elif response.status_code == 300:
+                html = BeautifulSoup(response.content, "html.parser")
+                links_html = html.find_all("a", href=True)
+                links = []
+                for link in links_html:
+                    links.append(link["href"])
+                print("Found multiple links: {}", links)
+                multiout = ""
+                for link in links:
+                    multiresponse = requests.get(
+                        url,
+                        headers={
+                            "Accept-Language": language_header,
+                            "Content-Language": language_header,
+                            "Accept": "text/html, text/html;type=simplified, text/plain, application/xhtml+xml, application/xhtml+xml;type=simplified, application/pdf, application/pdf;type=pdf1x, application/pdf;type=pdfa1a, application/pdf;type=pdfx, application/pdf;type=pdfa1b, application/msword",
+                        },
+                    )
+                    if multiresponse.status_code == 200:
+                        print(multiresponse.status_code)
+                        print(multiresponse.text)
+                        multiout += (
+                            self.read_data(multiresponse) + "---documentbreak---"
+                        )
+                    else:
+                        multiout += "NaN"
+                print(multiout)
+                out = multiout
+            elif response.status_code == 406:
+                out += "NaN"
+                print("missingdoc")
+            if not include_breaks:
+                out.replace("---documentbreak---", "").replace("---pagebreak---", "")
+            else:
+                print("No content retrieved {}", response)
+        if type == "ids":
+            response = requests.get(
+                url,
+                headers={
+                    "Accept-Language": language_header,
+                    "Accept": "application/xml; notice=identifiers",
+                },
+            )
+            if response.status_code == 200:
+                xml = BeautifulSoup(response.content, "xml.parser")
+                out = xml.find_all(".//VALUE").get_text()
+            else:
+                out += response.status_code
+        if type == "notice":
+            accept_header = "application/xml; notice=" + notice
+            if (
+                notice == "object"
+            ):  # if notice is of type object, there is no language header
+                response = requests.get(url, headers={"Accept": accept_header})
+            else:
+                response = requests.get(
+                    url,
+                    headers={
+                        "Accept-Language": language_header,
+                        "Accept": accept_header,
+                    },
+                )
+            if response.status_code == 200:
+                print("Retrived notice successfully.")
+                out += response.text
+            else:
+                print(
+                    "Something might have gone wrong: {}".format(response.status_code)
+                )
+        return out
+
+    # Reads response data and processes it to get the text, based on the content type
+    def read_data(self, response):
+        """This fucntion takes a response object, and returns text as a string. This text is parsed from a html, or a pdf. MS Word is not supported for now.
+        (the doc test currently only tests this function indirectly, as it is called from get_data(), but for testing it separately in doctest quite some things would have to be changed)
+        Parameters
+        ----------
+            response: A repsonse object that was returned from a previous request for data of type text from the EU Cellar repository
+        Returns
+        -------
+            ret:
+        Examples
+        --------
+        >>> from eurlex import Eurlex
+        >>> eur = Eurlex()
+        >>> eur.get_data("32016R0679", type="text")
+        """
+        # check content type to be html?
+        content_type = r.headers.get("Content-Type")
+        if "text/html" in content_type:
+            html = BeautifulSoup(response.content, "html.parser")
+            ret = html.find("body").get_text()
+            return ret + "---pagebreak---"
+        elif "application/pdf" in content_type:
+            text = extract_text(response.content)
+            return text + "---pagebreak---"
+        elif "application/msword" in content_type:
+            # would probably use python-docx to implement this
+            ret = "The Word format is not suppported at present"
+            print(ret)
+            return ret
+        else:
+            ret = "Error: unsupported content type"
+            print(ret)
+            return ret
+
+
+# The main function. It uses the fire framework to expose the functions of the module on the command line
 def main(argv=None):
     print("This is a CLI interface for pyeurlex")
     Fire(Eurlex)
