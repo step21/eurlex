@@ -24,6 +24,7 @@ pytest = "^7.1.2"
 pre-commit = "^2.20.0"
 scriv = {extras = ["toml"], version = "^0.16.0"}
 black = {version = "^22.6.0", allow-prereleases = true}
+tox = "^3.25.1"
 
 [build-system]
 requires = ["poetry-core>=1.0.0"]
