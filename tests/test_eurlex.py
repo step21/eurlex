@@ -2,7 +2,7 @@ from eurlex import __version__
 
 # This test is just a placeholder to make sure the tests are running
 def test_version():
-    assert __version__ == "0.1.2"
+    assert __version__ == "0.1.4"
 
 
 def test_make_query():
