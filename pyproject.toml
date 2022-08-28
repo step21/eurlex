@@ -1,6 +1,6 @@
 [tool.poetry]
 name = "pyeurlex"
-version = "0.1.5"
+version = "0.1.6"
 description = "This is a python module to create SPARQL queries for the EU Cellar repository, run them and subsequently download their data. Notably, it directly supports all resource types."
 authors = ["step21 <step21@devtal.de>"]
 packages = [
@@ -19,6 +19,7 @@ halo = "^0.0.31"
 fire = "^0.4.0"
 "pdfminer.six" = "^20220524"
 importlib-metadata = "1.4"
+typing-extensions = {version = "^4.3.0", python = "3.7.*"}
 
 [tool.poetry.dev-dependencies]
 pytest = "^7.1.2"

@@ -9,7 +9,11 @@ import sparql_dataframe
 # import json
 import os
 import re
-from typing import Literal, get_args
+
+try:
+    from typing import Literal, get_args
+except ImportError:
+    from typing_extensions import Literal
 from bs4 import BeautifulSoup
 from pdfminer.high_level import extract_text
 import pandas as pd
