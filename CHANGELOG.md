@@ -1,4 +1,10 @@
 
+# 2022-08-28
+
+## Changed
+
+- Downgraded pandas to 1.3.* for compatibility with Python 3.7 and various CI and tooling fixes.
+
 # 2022-08-24
 
 ## Added
