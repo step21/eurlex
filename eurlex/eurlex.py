@@ -13,7 +13,7 @@ import re
 try:
     from typing import Literal, get_args
 except ImportError:
-    from typing_extensions import Literal
+    from typing_extensions import Literal, get_args
 from bs4 import BeautifulSoup
 from pdfminer.high_level import extract_text
 import pandas as pd
