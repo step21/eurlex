@@ -1,6 +1,12 @@
 
 # 2022-08-28
 
+## Changed
+
+- Added Literal support for Python 3.7.
+
+# 2022-08-28
+
 ## Fixed
 
 - Fixed importlib.metadata incompatibility
