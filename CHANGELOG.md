@@ -1,4 +1,18 @@
 
+# 2022-08-30
+
+## Added
+
+- Added initial proper tests, one per function.
+
+## Changed
+
+- Improved docstrings.
+
+## Fixed
+
+- Fixed pylint issues and some bugs that were recently introduced.
+
 # 2022-08-28
 
 ## Changed
