@@ -3,6 +3,16 @@
 
 ## Added
 
+- Added a test for a directive query.
+
+## Fixed
+
+- Fixed the `caselaw_proper`resource type in `make_query`.
+
+# 2022-08-30
+
+## Added
+
 - Added initial proper tests, one per function.
 
 ## Changed
