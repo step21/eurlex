@@ -1,14 +1,11 @@
 """
-* Python module to query eurlex for metadata of documents with sparql queries, and subsequently download associated documents 
-* Parameters: api endpoint, sparql query, document type, output directory
+* Python module to create eurlex cellar queries, query eurlex for metadata of documents with sparql queries, and subsequently download associated documents and notices.
 """
-
+import os
+import re
 import requests
 import sparql_dataframe
 
-# import json
-import os
-import re
 
 try:
     from typing import Literal, get_args
@@ -22,6 +19,8 @@ from fire import Fire
 
 
 class Eurlex:
+    """The sole class of the pyeurlex module."""
+
     def __init__(
         self,
         endpoint="http://publications.europa.eu/webapi/rdf/sparql",
@@ -187,16 +186,14 @@ class Eurlex:
         """
         spinner = Halo(text="Appending query text...", spinner="line")
         spinner.start()
-        assert resource_type != None, "resource_type must be specified"
+        assert resource_type is not None, "resource_type must be specified"
         assert resource_type in get_args(
             self._RESOURCE_TYPES
         ), f"'{resource_type}' is invalid - valid options are {get_args(self._RESOURCE_TYPES)}"
         if resource_type == "manual":
             assert (
                 len(manual_type) > 2
-            ), "{} is invalid - please specify a proper type from http://publications.europa.eu/resource/authority/resource-type".format(
-                manual_type
-            )
+            ), f"{manual_type} is invalid - please specify a proper type from http://publications.europa.eu/resource/authority/resource-type"
         if resource_type in ["caselaw", "manual", "any"] and include_court_procedure:
             raise Exception(
                 "Resource and variable requested are incompatible"
@@ -400,7 +397,7 @@ class Eurlex:
             query += """ FILTER(?type=<http://publications.europa.eu/resource/authority/resource-type/MEAS_NATION_IMPL>)"""
         if resource_type == "manual" and manual_type and len(manual_type) > 1:
             query += """ FILTER(?type=<http://publications.europa.eu/resource/authority/resource-type/" + manual_type + ">)"""
-        if include_corrigenda == False and resource_type != "caselaw":
+        if include_corrigenda is False and resource_type != "caselaw":
             query += """ FILTER not exists{?work cdm:work_has_resource-type <http://publications.europa.eu/resource/authority/resource-type/CORRIGENDUM>}"""
         if include_celex:
             query += """OPTIONAL{?work cdm:resource_legal_id_celex ?celex.}"""
@@ -435,7 +432,7 @@ class Eurlex:
             query += """ OPTIONAL{?work cdm:work_created_by_agent ?authorx.
                    ?authorx skos:prefLabel ?author. FILTER(lang(?author)='en')}."""  # TODO - option to not filter by EN/follow language setting
         if include_citations:
-            query += """ OPTIONAL{?work cdm:work_cites_work ?citation. 
+            query += """ OPTIONAL{?work cdm:work_cites_work ?citation.
                 ?citation cdm:resource_legal_id_celex ?citationcelex.}"""
         if include_court_procedure:
             query += """ OPTIONAL{?work cdm:case-law_has_type_procedure_concept_type_procedure ?proc.
@@ -502,15 +499,15 @@ class Eurlex:
 
         spinner = Halo(text="Querying EU SPARQL endpoint ...", spinner="line")
         spinner.start()
-        df = pd.DataFrame()
+        data_frame = pd.DataFrame()
         # sparql.setReturnFormat(JSON)
         # convert?
         try:
-            df = sparql_dataframe.get(endpoint, query)
+            data_frame = sparql_dataframe.get(endpoint, query)
         except Exception as e:
             print("There was an error when performing the query: ", e)
         spinner.stop()
-        return df
+        return data_frame
 
     notice_type: Literal = ["tree", "branch", "object"]
 
@@ -606,7 +603,9 @@ class Eurlex:
         file_content = requests.get(head.url).content
         with open(filename, mode) as writer:
             writer.write(file_content)
-        # TODO alternatively, offer to return instead of saving to file (or make separate function)
+        return str(
+            file_content
+        )  # TODO alternatively, offer to return instead of saving to file (or make separate function)
 
     data_type: Literal = ["title", "text", "id", "notices"]
 
@@ -615,7 +614,7 @@ class Eurlex:
     def get_data(
         self,
         url,
-        type: data_type,
+        data_type: data_type,
         notice: notice_type = None,
         languages: list = ["en", "fr", "de"],
         include_breaks: bool = False,
@@ -625,6 +624,16 @@ class Eurlex:
         ----------
         url
             The URL or CELEX number to download/access
+        data_type
+            The data type to download. Valid options are title, text, id or notices. This parameter is required.
+        notice
+            The type of notice to download.
+        languages
+            A list of the prefered languages, from most preferred to least preferred. Currently, the code does not check whether the languages are named correctly or exist.
+            Default: ["en", "fr", "de"]
+        include_breaks
+            Whether or not to insert page breaks into text.
+            Default: False
         Returns
         -------
             out: The relevant response as str
@@ -632,20 +641,22 @@ class Eurlex:
         --------
         >>> from eurlex import Eurlex
         >>> eur = Eurlex()
-        >>> eur.get_data("http://publications.europa.eu/resource/celex/32016R0679", type = "text")
+        >>> eur.get_data("http://publications.europa.eu/resource/celex/32016R0679", data_type = "text")
         >>> eur.get_data("32016R0679")
         >>> eur.get_data("32014R0001")
         """
 
         assert url, "The URL or CELEX number is necessary to retrieve data"
         assert (
-            type
+            data_type
         ), "The type of the data to be parsed is necessary"  # TODO - maybe just parse all in one go?
         assert (
-            type in self.data_type
+            data_type in self.data_type
         ), "The type of data to be parsed has to be one of title, text, id or notices"
         assert (
-            type == "notice" and notice != None or type != notice
+            data_type == "notice"
+            and notice is not None
+            or data_type != notice  # Is this comparison correct?
         ), "The type of notice to be processed has to be provided"
         # TODO
         # Ok, it is a bit weird to filter language not in CELLAR but in http header
@@ -670,7 +681,7 @@ class Eurlex:
             url = "http://publications.europa.eu/resource/celex/" + url
             print("The CELEX url is: {}".format(url))
 
-        if type == "title":
+        if data_type == "title":
             try:
                 print("Getting title data...")
                 response = requests.get(
@@ -689,7 +700,7 @@ class Eurlex:
                 )
             else:
                 print("No content retrieved: {}", response.status_code)
-        if type == "text":
+        if data_type == "text":
             try:
                 print("Getting text data...")
                 response = requests.get(
@@ -736,11 +747,12 @@ class Eurlex:
             elif response.status_code == 406:
                 out += "NaN"
                 print("missingdoc")
-            if not include_breaks:
-                out.replace("---documentbreak---", "").replace("---pagebreak---", "")
             else:
                 print("No content retrieved {}", response)
-        if type == "ids":
+            if not include_breaks:
+                out.replace("---documentbreak---", "").replace("---pagebreak---", "")
+
+        if data_type == "ids":
             response = requests.get(
                 url,
                 headers={
@@ -753,7 +765,7 @@ class Eurlex:
                 out = xml.find_all(".//VALUE").get_text()
             else:
                 out += response.status_code
-        if type == "notice":
+        if data_type == "notice":
             accept_header = "application/xml; notice=" + notice
             if (
                 notice == "object"
@@ -771,9 +783,7 @@ class Eurlex:
                 print("Retrived notice successfully.")
                 out += response.text
             else:
-                print(
-                    "Something might have gone wrong: {}".format(response.status_code)
-                )
+                print(f"Something might have gone wrong: {response.status_code}")
         return out
 
     # Reads response data and processes it to get the text, based on the content type
@@ -793,7 +803,7 @@ class Eurlex:
         >>> eur.get_data("32016R0679", type="text")
         """
         # check content type to be html?
-        content_type = r.headers.get("Content-Type")
+        content_type = response.headers.get("Content-Type")
         if "text/html" in content_type:
             html = BeautifulSoup(response.content, "html.parser")
             ret = html.find("body").get_text()
@@ -807,7 +817,7 @@ class Eurlex:
             print(ret)
             return ret
         else:
-            ret = "Error: unsupported content type"
+            ret = f"Error: unsupported content type: {content_type}"
             print(ret)
             return ret
 
