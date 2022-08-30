@@ -9,31 +9,35 @@ limit = 10
 @pytest.fixture
 def eurlex_inst():
     eur = Eurlex()
-    print("print0")
     return eur
 
 
 @pytest.fixture
 def some_query(eurlex_inst):
     q = eurlex_inst.make_query(resource_type="caselaw", order=True, limit=limit)
-    print("test1")
-    print(q)
     return q
 
 
-# This test is just a placeholder to make sure the tests are running
-def test_version():
-    assert __version__ == "0.1.6"
-
-
 def test_make_query(some_query):
-    # test_query = some_query
-    print("test3")
-    # eur = Eurlex()
-    # test_query = eur.make_query(resource_type="caselaw", order=True, limit=limit)
     print(some_query)
     assert some_query
     assert "PREFIX" in some_query
+
+
+def test_make_query_directive(eurlex_inst):
+    # TODO - split this so each test only tests on thing
+    directive_query = eurlex_inst.make_query(
+        resource_type="directive",
+        include_date=True,
+        include_force=True,
+        include_date_force=True,
+        include_date_endvalid=True,
+        include_date_transposed=True,
+        include_date_lodged=True,
+        include_lbs=True,
+    )
+    assert directive_query
+    assert "PREFIX" in directive_query
 
 
 def test_query_eurlex(some_query):

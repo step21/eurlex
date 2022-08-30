@@ -339,7 +339,7 @@ class Eurlex:
         if resource_type == "caselaw_proper":
             query += """ FILTER(?type=<http://publications.europa.eu/resource/authority/resource-type/JUDG>||
   ?type=<http://publications.europa.eu/resource/authority/resource-type/ORDER>||
-  ?type=<http://publications.europa.eu/resource/authority/resource-type/RULING>||)"""
+  ?type=<http://publications.europa.eu/resource/authority/resource-type/RULING>)"""
         if resource_type == "ag_opinion":
             query += """ FILTER(?type=<http://publications.europa.eu/resource/authority/resource-type/VIEW_AG>||
             ?type=<http://publications.europa.eu/resource/authority/resource-type/OPIN_AG>)"""
@@ -816,6 +816,7 @@ class Eurlex:
             ret = "The Word format is not suppported at present"
             print(ret)
             return ret
+        # len('Error: unsupported content type: application/xhtml+xml;charset=UTF-8')
         else:
             ret = f"Error: unsupported content type: {content_type}"
             print(ret)
