@@ -215,15 +215,15 @@ class Eurlex:
             query += " ?celex"
         # add parameter for date
         if include_date:
-            query += " str(?date)"
+            query += " ?date"
         if include_date_force:
-            query += " str(?dateforce)"
+            query += " ?dateforce"
         if include_date_endvalid:
-            query += " str(?dateendvalid)"
+            query += " ?dateendvalid"
         if include_date_transposed:
-            query += " str(?datetranspos)"
+            query += " ?datetranspos"
         if include_date_lodged:
-            query += " str(?datelodged)"
+            query += " ?datelodged"
         if include_lbs:
             assert (
                 resource_type != "caselaw"
@@ -460,7 +460,7 @@ class Eurlex:
         # add filter to only include latest version (inspired by eurlex R package)
         query += """ FILTER not exists{?work cdm:do_not_index "true"^^<http://www.w3.org/2001/XMLSchema#boolean>}."""
         if order:
-            query += """} order by str(?date)"""
+            query += """} order by ?date"""
             # TODO - add option to order by different fields
         else:
             # This adds the closing curly braces to the query
@@ -470,6 +470,7 @@ class Eurlex:
         # somehow this was added in R: FILTER not exists{?work cdm:do_not_index \"true\"^^<http://www.w3.org/2001/XMLSchema#boolean>}. }
 
         spinner.stop()
+        # TODO add formatting option from server format=application%2Fsparql-results%2Bjson (from https://publications.europa.eu/webapi/rdf/sparql)
         # some postprocessing to get rid of newlines
         return query.replace("\n", "")  # .replace("\t", " ")
 
@@ -499,6 +500,7 @@ class Eurlex:
 
         spinner = Halo(text="Querying EU SPARQL endpoint ...", spinner="line")
         spinner.start()
+        # TODO rename columns - also check for date with regex such as [0-9]{4}\-[0-9]+?\-[0-9]+$
         data_frame = pd.DataFrame()
         # sparql.setReturnFormat(JSON)
         # convert?
