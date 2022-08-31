@@ -1,4 +1,10 @@
 
+# 2022-08-31
+
+## Changed
+
+- Changed the query for dates, so that str() is not used. This allows for proper column names in pandas dataframes.
+
 # 2022-08-30
 
 ## Added
