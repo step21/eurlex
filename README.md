@@ -1,6 +1,6 @@
 # pyeurlex package
 
-This is a python module to create SPARQL queries for the EU Cellar repository, run them and subsequently download their data. Notably, it directly supports all resource types. 
+This is a python module to create SPARQL queries for the EU Cellar repository, run them and subsequently download their data. Notably, it directly supports all resource types. Inspired by the R-based [eurlex](https://github.com/michalovadek/eurlex) package by Michal Ovadek, but then I wanted one for python and was not satisfied with existing python packages.
 
 ## Usage
 
@@ -41,5 +41,5 @@ print(d)
 
 # Why another package/module?
 
-Inspired by the  R based eurlex package, which helped a lot with the SPARQL construction and understanding and general inspiration.
-There is also https://github.com/seljaseppala/eu_corpus_compiler but that also only does regulatory/legislative documents. There is https://pypi.org/project/eurlex/, but it for example does not have a way to generate SPARQL queries and is also very focused on legislation. In addition, while internally it uses SPARQL and cellar as well, its documentation is focused on accessing and processing documents via CELEX number, which is not really helpful to me. Thus, this package was born.
+While there was already the R packages by Michal Ovadek, I wanted a python implementation.
+There is also https://github.com/seljaseppala/eu_corpus_compiler but that also only does regulatory/legislative documents. Additionally, there is https://pypi.org/project/eurlex/, but it for example does not have a way to generate SPARQL queries and is also very focused on legislation. In addition, while internally it uses SPARQL and cellar as well, its documentation is focused on accessing and processing documents via CELEX number, which is not really helpful to me. Another one is https://github.com/Lexparency/eurlex2lexparency which also seems to focus on legislative documents and 
