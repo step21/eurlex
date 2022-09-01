@@ -1,13 +1,18 @@
-name: Publish to PyPI
+name: Build and Release
 
 on:
-  release:
-    types: [ published ]
-    branches: [ main ]
-  workflow_dispatch:
+  push:
+    tags:
+      - 'v*'
+  worklow-dispatch:
+    #on:
+    #release:
+    #types: [ published ]
+    #branches: [ main ]
+    #workflow_dispatch:
 
 jobs:
-  build-and-publish:
+  build-and-release:
     runs-on: ubuntu-latest
 
     steps:
@@ -22,7 +27,7 @@ jobs:
       - name: Install poetry and dependencies
         run: |
           python -m pip install --upgrade pip
-          python -m pip install poetry
+          python -m pip install poetry scriv
 
       - name: Configure poetry
         env:
@@ -32,4 +37,15 @@ jobs:
       - name: Build and publish
         run: poetry publish --build
 
-
+      - name: Create Github Release with scriv
+        id: create_release
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          $GITHUB_TOKEN > ~/.netrc
+          scriv github-release
+        with:
+          tag_name: ${{ github.ref }}
+          release_name: ${{github.ref }}
+          draft: false
+          prerelease: false
