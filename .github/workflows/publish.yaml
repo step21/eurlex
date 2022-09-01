@@ -44,8 +44,3 @@ jobs:
         run: |
           $GITHUB_TOKEN > ~/.netrc
           scriv github-release
-        with:
-          tag_name: ${{ github.ref }}
-          release_name: ${{github.ref }}
-          draft: false
-          prerelease: false
