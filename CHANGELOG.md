@@ -1,4 +1,14 @@
 
+# 2022-09-01
+
+## Added
+
+- Made text output mostly only available when started from the commandline (as main)..
+
+## Fixed
+
+- Fixed a bug in `get_data` due to an uninitialized variable.
+
 # 2022-08-31
 
 ## Changed
