@@ -4,7 +4,7 @@ on:
   push:
     tags:
       - 'v*'
-  worklow-dispatch:
+  workflow-dispatch:
     #on:
     #release:
     #types: [ published ]
