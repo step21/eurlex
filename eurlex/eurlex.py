@@ -184,8 +184,9 @@ class Eurlex:
         >>> eur.make_query(resource_type = "manual", manual_type = "SWD") # doctest: +ELLIPSIS
         PREFIX ...
         """
-        spinner = Halo(text="Appending query text...", spinner="line")
-        spinner.start()
+        if __name__ == "__main__":
+            spinner = Halo(text="Appending query text...", spinner="line")
+            spinner.start()
         assert resource_type is not None, "resource_type must be specified"
         assert resource_type in get_args(
             self._RESOURCE_TYPES
@@ -468,8 +469,8 @@ class Eurlex:
         if limit and limit is not None and isinstance(limit, int):
             query += " limit " + str(limit)
         # somehow this was added in R: FILTER not exists{?work cdm:do_not_index \"true\"^^<http://www.w3.org/2001/XMLSchema#boolean>}. }
-
-        spinner.stop()
+        if __name__ == "__main__":
+            spinner.stop()
         # TODO add formatting option from server format=application%2Fsparql-results%2Bjson (from https://publications.europa.eu/webapi/rdf/sparql)
         # some postprocessing to get rid of newlines
         return query.replace("\n", "")  # .replace("\t", " ")
@@ -497,9 +498,9 @@ class Eurlex:
         >>> eur = Eurlex()
         >>> eur.query_eurlex("PREFIX dcat: <http://www.w3.org/ns/dcat#> PREFIX odp:  <http://data.europa.eu/euodp/ontologies/ec-odp#> PREFIX dct: <http://purl.org/dc/terms/> PREFIX xsd: <http://www.w3.org/2001/XMLSchema#> PREFIX foaf: <http://xmlns.com/foaf/0.1/> SELECT * WHERE { ?d a dcat:Dataset } LIMIT 10")
         """
-
-        spinner = Halo(text="Querying EU SPARQL endpoint ...", spinner="line")
-        spinner.start()
+        if __name__ == "__main__":
+            spinner = Halo(text="Querying EU SPARQL endpoint ...", spinner="line")
+            spinner.start()
         # TODO rename columns - also check for date with regex such as [0-9]{4}\-[0-9]+?\-[0-9]+$
         data_frame = pd.DataFrame()
         # sparql.setReturnFormat(JSON)
@@ -508,7 +509,8 @@ class Eurlex:
             data_frame = sparql_dataframe.get(endpoint, query)
         except Exception as e:
             print("There was an error when performing the query: ", e)
-        spinner.stop()
+        if __name__ == "__main__":
+            spinner.stop()
         return data_frame
 
     notice_type: Literal = ["tree", "branch", "object"]
@@ -673,9 +675,9 @@ class Eurlex:
             else:
                 print("Only three languages at a time are supported")
 
-        print("The language header is: {}".format(language_header))
         if url[:4] == "http" and re.fullmatch(".*cellar.*", url):
-            print("Assuming URL to be a valid, http based EU Cellar resource")
+            if __name__ == "__main__":
+                print("Assuming URL to be a valid, http based EU Cellar resource")
         else:
             # TODO - Add additional testing?
             # if (stringr::str_detect(url,"celex.*[\\(|\\)|\\/]")){
@@ -684,6 +686,7 @@ class Eurlex:
             print("The CELEX url is: {}".format(url))
 
         if data_type == "title":
+            out = ""
             try:
                 print("Getting title data...")
                 response = requests.get(
@@ -701,10 +704,15 @@ class Eurlex:
                     html.find_next("//EXPRESSION_TITLE").find_next("VALUE").get_text()
                 )
             else:
-                print("No content retrieved: {}", response.status_code)
+                if __name__ == "__main__":
+                    print("No content retrieved: {}", response.status_code)
+                out += response.status_code
+
         if data_type == "text":
+            out = None
             try:
-                print("Getting text data...")
+                if __name__ == "__main__":
+                    print("Getting text data...")
                 response = requests.get(
                     url,
                     headers={
@@ -717,7 +725,8 @@ class Eurlex:
                 print("There was an error during gathering data: {}", e)
 
             if response.status_code == 200:
-                print("Got a {} reponse, great!".format(response.status_code))
+                if __name__ == "__main__":
+                    print("Got a {} reponse, great!".format(response.status_code))
                 out = self.read_data(response)
             elif response.status_code == 300:
                 html = BeautifulSoup(response.content, "html.parser")
@@ -747,14 +756,17 @@ class Eurlex:
                 print(multiout)
                 out = multiout
             elif response.status_code == 406:
-                out += "NaN"
-                print("missingdoc")
+                out += "NaN" + response.status_code
+                if __name__ == "__main__":
+                    print("missingdoc")
             else:
-                print("No content retrieved {}", response)
+                if __name__ == "__main__":
+                    print("No content retrieved {}", response)
             if not include_breaks:
                 out.replace("---documentbreak---", "").replace("---pagebreak---", "")
 
         if data_type == "ids":
+            out = None
             response = requests.get(
                 url,
                 headers={
@@ -768,6 +780,7 @@ class Eurlex:
             else:
                 out += response.status_code
         if data_type == "notice":
+            out = None
             accept_header = "application/xml; notice=" + notice
             if (
                 notice == "object"
@@ -782,15 +795,18 @@ class Eurlex:
                     },
                 )
             if response.status_code == 200:
-                print("Retrived notice successfully.")
+                if __name__ == "__main__":
+                    print("Retrived notice successfully.")
                 out += response.text
             else:
-                print(f"Something might have gone wrong: {response.status_code}")
+                out = response.status_code
+                if __name__ == "__main__":
+                    print(f"Something might have gone wrong: {response.status_code}")
         return out
 
     # Reads response data and processes it to get the text, based on the content type
     def read_data(self, response):
-        """This fucntion takes a response object, and returns text as a string. This text is parsed from a html, or a pdf. MS Word is not supported for now.
+        """This function takes a response object, and returns text as a string. This text is parsed from a html, or a pdf. MS Word is not supported for now.
         (the doc test currently only tests this function indirectly, as it is called from get_data(), but for testing it separately in doctest quite some things would have to be changed)
         Parameters
         ----------
