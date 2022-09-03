@@ -520,7 +520,7 @@ class Eurlex:
     def download_xml(
         self,
         url: str,
-        notice: notice_type = "object",
+        notice: notice_type,
         filename: str = None,
         languages: list = ["en", "fr", "de"],
         mode: str = "wb",
@@ -611,17 +611,18 @@ class Eurlex:
             file_content
         )  # TODO alternatively, offer to return instead of saving to file (or make separate function)
 
-    data_type: Literal = ["title", "text", "id", "notices"]
+    data_types: Literal = ["title", "text", "ids", "notice"]
 
     "Download data/documents from EU Cellar based on a given resource URL"
 
     def get_data(
         self,
         url,
-        data_type: data_type,
+        data_type: data_types,
         notice: notice_type = None,
         languages: list = ["en", "fr", "de"],
         include_breaks: bool = False,
+        extract_caselaw_metadata: bool = False,
     ):
         """This function takes a URL or Celex number and returns data, such as the title, text, the id, or notices.
         Parameters
@@ -629,7 +630,7 @@ class Eurlex:
         url
             The URL or CELEX number to download/access
         data_type
-            The data type to download. Valid options are title, text, id or notices. This parameter is required.
+            The data type to download. Valid options are title, text, ids or notice. This parameter is required.
         notice
             The type of notice to download.
         languages
@@ -637,6 +638,9 @@ class Eurlex:
             Default: ["en", "fr", "de"]
         include_breaks
             Whether or not to insert page breaks into text.
+            Default: False
+        extract_caselaw_metadata
+            For the title, tries to break it down into case name, parties and case number.
             Default: False
         Returns
         -------
@@ -655,13 +659,16 @@ class Eurlex:
             data_type
         ), "The type of the data to be parsed is necessary"  # TODO - maybe just parse all in one go?
         assert (
-            data_type in self.data_type
-        ), "The type of data to be parsed has to be one of title, text, id or notices"
-        assert (
-            data_type == "notice"
-            and notice is not None
-            or data_type != notice  # Is this comparison correct?
-        ), "The type of notice to be processed has to be provided"
+            data_type in self.data_types
+        ), "The type of data to be parsed has to be one of title, text, ids or notice"
+        if data_type == "notice":
+            assert (
+                notice is not None and notice in self.notice_type
+            ), "The type of notice to be processed has to be provided"
+        if data_type != "title":
+            assert (
+                extract_caselaw_metadata is False
+            ), "Case law metadata can only be extracted from titles (of caselaw)"
         # TODO
         # Ok, it is a bit weird to filter language not in CELLAR but in http header
         language_header = ""
@@ -679,16 +686,19 @@ class Eurlex:
             if __name__ == "__main__":
                 print("Assuming URL to be a valid, http based EU Cellar resource")
         else:
-            # TODO - Add additional testing?
-            # if (stringr::str_detect(url,"celex.*[\\(|\\)|\\/]")){
-            # assume it is a CELEX number
-            url = "http://publications.europa.eu/resource/celex/" + url
-            print("The CELEX url is: {}".format(url))
+            if not url[:4] == http:
+                # TODO - Add additional testing?
+                # if (stringr::str_detect(url,"celex.*[\\(|\\)|\\/]")){
+                # assume it is a CELEX number
+                url = "http://publications.europa.eu/resource/celex/" + url
+                if __name__ == "__main__":
+                    print("The CELEX url is: {}".format(url))
 
         if data_type == "title":
             out = ""
             try:
-                print("Getting title data...")
+                if __name__ == "__main__":
+                    print("Getting title data...")
                 response = requests.get(
                     url,
                     headers={
@@ -699,17 +709,27 @@ class Eurlex:
             except Exception as e:
                 print("There was an error during data retrieval: {}", e)
             if response.status_code == 200:
-                html = BeautifulSoup(response.text, "xml.parser")
-                out += (
-                    html.find_next("//EXPRESSION_TITLE").find_next("VALUE").get_text()
-                )
+                html = BeautifulSoup(response.text, "xml")
+                out = str(html.find("EXPRESSION_TITLE").get_text())
+                if extract_caselaw_metadata and "#" in out:
+                    title = out.split("#")[0].strip()
+                    parties = out.split("#")[1].strip().strip(".")
+                    case_number = out.split("#")[2].strip().strip(".")
+
+                    out = {
+                        "title": title,
+                        "parties": parties,
+                        "case_number": case_number,
+                    }
+                if __name__ == "__main__":
+                    print(out)
             else:
                 if __name__ == "__main__":
                     print("No content retrieved: {}", response.status_code)
-                out += response.status_code
+                out += str(response.status_code)
 
-        if data_type == "text":
-            out = None
+        elif data_type == "text":
+            out = ""
             try:
                 if __name__ == "__main__":
                     print("Getting text data...")
@@ -746,7 +766,7 @@ class Eurlex:
                         },
                     )
                     if multiresponse.status_code == 200:
-                        print(multiresponse.status_code)
+                        print(str(multiresponse.status_code))
                         print(multiresponse.text)
                         multiout += (
                             self.read_data(multiresponse) + "---documentbreak---"
@@ -756,7 +776,9 @@ class Eurlex:
                 print(multiout)
                 out = multiout
             elif response.status_code == 406:
-                out += "NaN" + response.status_code
+                out += "NaN" + str(
+                    response.status_code
+                )  # TODO ok this is a pretty ... thing to do
                 if __name__ == "__main__":
                     print("missingdoc")
             else:
@@ -765,8 +787,8 @@ class Eurlex:
             if not include_breaks:
                 out.replace("---documentbreak---", "").replace("---pagebreak---", "")
 
-        if data_type == "ids":
-            out = None
+        elif data_type == "ids":
+            out = ""
             response = requests.get(
                 url,
                 headers={
@@ -775,12 +797,18 @@ class Eurlex:
                 },
             )
             if response.status_code == 200:
-                xml = BeautifulSoup(response.content, "xml.parser")
-                out = xml.find_all(".//VALUE").get_text()
+                xml = BeautifulSoup(response.content, "xml")
+                out = xml.find_all("VALUE")
+                temp = []
+                for v in out:
+                    temp.append(v.get_text())
+                out = temp
+                if __name__ == "__main__":
+                    print(out)
             else:
-                out += response.status_code
-        if data_type == "notice":
-            out = None
+                out += str(response.status_code)
+        elif data_type == "notice":
+            out = ""
             accept_header = "application/xml; notice=" + notice
             if (
                 notice == "object"
@@ -797,12 +825,16 @@ class Eurlex:
             if response.status_code == 200:
                 if __name__ == "__main__":
                     print("Retrived notice successfully.")
+                    print(response.text)
                 out += response.text
             else:
-                out = response.status_code
+                out = str(response.status_code)
                 if __name__ == "__main__":
                     print(f"Something might have gone wrong: {response.status_code}")
-        return out
+        else:
+            return "You should not be here."
+            if out:
+                return out
 
     # Reads response data and processes it to get the text, based on the content type
     def read_data(self, response):
