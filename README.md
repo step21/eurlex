@@ -4,7 +4,7 @@ This is a python module to create SPARQL queries for the EU Cellar repository, r
 
 ## Status
 
-[![codecov](https://codecov.io/gh/step21/eurlex/branch/main/graph/badge.svg?token=5EXROQA8XK)](https://codecov.io/gh/step21/eurlex)
+![Build and Test](https://github.com/step21/eurlex/actions/workflows/build.yaml/badge.svg) | [![codecov](https://codecov.io/gh/step21/eurlex/branch/main/graph/badge.svg?token=5EXROQA8XK)](https://codecov.io/gh/step21/eurlex)
 
 ## Usage
 
