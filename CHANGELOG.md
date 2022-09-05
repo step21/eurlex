@@ -1,4 +1,14 @@
 
+# 2022-09-03
+
+## Added
+
+- Extracting title, parties and case number from title data. This has to be explicitly specified and will not work on f.e. directives.
+
+## Fixed
+
+- Fixed get data to properly parse title data, and ids.
+
 # 2022-09-01
 
 ## Added
