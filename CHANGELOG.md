@@ -1,6 +1,12 @@
 
 # 2022-09-05
 
+## Fixed
+
+- Fixed a variety of bugs in `get_data`.
+
+# 2022-09-05
+
 ## Removed
 
 - Removed dependency on importlib_metadata.
