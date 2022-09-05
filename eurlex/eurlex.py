@@ -686,7 +686,7 @@ class Eurlex:
             if __name__ == "__main__":
                 print("Assuming URL to be a valid, http based EU Cellar resource")
         else:
-            if not url[:4] == http:
+            if not url[:4] == "http":
                 # TODO - Add additional testing?
                 # if (stringr::str_detect(url,"celex.*[\\(|\\)|\\/]")){
                 # assume it is a CELEX number
@@ -748,6 +748,7 @@ class Eurlex:
                 if __name__ == "__main__":
                     print("Got a {} reponse, great!".format(response.status_code))
                 out = self.read_data(response)
+
             elif response.status_code == 300:
                 html = BeautifulSoup(response.content, "html.parser")
                 links_html = html.find_all("a", href=True)
@@ -785,7 +786,9 @@ class Eurlex:
                 if __name__ == "__main__":
                     print("No content retrieved {}", response)
             if not include_breaks:
-                out.replace("---documentbreak---", "").replace("---pagebreak---", "")
+                out = out.replace("---documentbreak---", "").replace(
+                    "---pagebreak---", ""
+                )
 
         elif data_type == "ids":
             out = ""
@@ -833,8 +836,10 @@ class Eurlex:
                     print(f"Something might have gone wrong: {response.status_code}")
         else:
             return "You should not be here."
-            if out:
-                return out
+        if out:
+            return out
+        else:
+            return 1
 
     # Reads response data and processes it to get the text, based on the content type
     def read_data(self, response):
