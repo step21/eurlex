@@ -42,5 +42,4 @@ jobs:
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
-          sh $GITHUB_TOKEN > ~/.netrc
           scriv github-release
