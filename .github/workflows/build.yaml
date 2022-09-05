@@ -31,7 +31,13 @@ jobs:
 
       - name: Run tox
         run: tox
-
+      
+      - name: Upload coverage to CodecovTest
+        if: "matrix.python-version == '3.10'"
+        run: |
+          ls -lah
+          ls ../
+      
       - name: Upload coverage to Codecov
         if: "matrix.python-version == '3.10'"
         uses: codecov/codecov-action@v3
