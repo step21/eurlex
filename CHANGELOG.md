@@ -1,4 +1,10 @@
 
+# 2022-09-05
+
+## Removed
+
+- Removed dependency on importlib_metadata.
+
 # 2022-09-03
 
 ## Added
