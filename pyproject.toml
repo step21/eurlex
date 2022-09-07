@@ -19,6 +19,7 @@ halo = "^0.0.31"
 fire = "^0.4.0"
 "pdfminer.six" = "^20220524"
 typing-extensions = {version = "^4.3.0", python = "3.7.*"}
+scriv = {extras = ["toml"], version = "^0.16.0"}
 
 [tool.poetry.dev-dependencies]
 pytest = "^7.1.2"
