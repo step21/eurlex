@@ -3,6 +3,12 @@
 
 ## Fixed
 
+- Properly handle title strings that do not feature three parts divided by #.
+
+# 2022-09-07
+
+## Fixed
+
 - Fixing errant string return on `extract_metadata=True`.
 
 # 2022-09-07
