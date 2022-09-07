@@ -1,6 +1,7 @@
 import pytest
-from eurlex import __version__
+
 import eurlex
+from eurlex import __version__
 from eurlex.eurlex import Eurlex
 
 limit = 10
