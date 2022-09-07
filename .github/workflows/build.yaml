@@ -29,17 +29,15 @@ jobs:
           python -m pip install --upgrade pip
           python -m pip install tox tox-gh-actions
 
-      - name: Run tox
-        run: |
-          ls -lah
-          tox
+      - name: Run tox for testing
+        run: tox
       
-      - name: Upload coverage to CodecovTest
+      - name: Run tox for coverage
         if: "matrix.python-version == '3.10'"
-        run: |
-          ls -lah
-          ls ../
+        run: tox -e coverage
       
       - name: Upload coverage to Codecov
         if: "matrix.python-version == '3.10'"
         uses: codecov/codecov-action@v3
+        with:
+          fail_ci_if_error: true

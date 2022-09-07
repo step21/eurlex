@@ -2,6 +2,10 @@
 
 This is a python module to create SPARQL queries for the EU Cellar repository, run them and subsequently download their data. Notably, it directly supports all resource types. Some parts like the SPARQL queries are based on the R-based [eurlex](https://github.com/michalovadek/eurlex) package by Michal Ovadek, but then I wanted one for python and was not satisfied with existing python packages.
 
+## Status
+
+![Build and Test](https://github.com/step21/eurlex/actions/workflows/build.yaml/badge.svg) | [![codecov](https://codecov.io/gh/step21/eurlex/branch/main/graph/badge.svg?token=5EXROQA8XK)](https://codecov.io/gh/step21/eurlex)
+
 ## Usage
 
 Import and instantiate the moduel
