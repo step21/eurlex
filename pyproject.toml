@@ -1,6 +1,6 @@
 [tool.poetry]
 name = "pyeurlex"
-version = "0.2.3"
+version = "0.2.4"
 description = "This is a python module to create SPARQL queries for the EU Cellar repository, run them and subsequently download their data. Notably, it directly supports all resource types."
 authors = ["step21 <step21@devtal.de>"]
 packages = [
@@ -19,6 +19,7 @@ halo = "^0.0.31"
 fire = "^0.4.0"
 "pdfminer.six" = "^20220524"
 typing-extensions = {version = "^4.3.0", python = "3.7.*"}
+# according to https://github.com/python-poetry/poetry/issues/1145 extras are only for deps, not dev-deps, so this does nothing
 scriv = {extras = ["toml"], version = "^0.16.0"}
 
 [tool.poetry.dev-dependencies]
