@@ -726,7 +726,11 @@ class Eurlex:
             else:
                 if __name__ == "__main__":
                     print("No content retrieved: {}", response.status_code)
-                out += str(response.status_code)
+                out = {
+                    "title": str(response.status_code),
+                    "parties": str(response.status_code),
+                    "case_number": str(response.status_code),
+                }
 
         elif data_type == "text":
             out = ""
@@ -755,7 +759,8 @@ class Eurlex:
                 links = []
                 for link in links_html:
                     links.append(link["href"])
-                print("Found multiple links: {}", links)
+                if __name__ == "__main__":
+                    print("Found multiple links: {}", links)
                 multiout = ""
                 for link in links:
                     multiresponse = requests.get(
@@ -767,14 +772,16 @@ class Eurlex:
                         },
                     )
                     if multiresponse.status_code == 200:
-                        print(str(multiresponse.status_code))
-                        print(multiresponse.text)
+                        if __name__ == "__main__":
+                            print(str(multiresponse.status_code))
+                            print(multiresponse.text)
                         multiout += (
                             self.read_data(multiresponse) + "---documentbreak---"
                         )
                     else:
                         multiout += "NaN"
-                print(multiout)
+                if __name__ == "__main__":
+                    print(multiout)
                 out = multiout
             elif response.status_code == 406:
                 out += "NaN" + str(
@@ -859,7 +866,7 @@ class Eurlex:
         """
         # check content type to be html?
         content_type = response.headers.get("Content-Type")
-        if "text/html" in content_type:
+        if "text/html" in content_type or "application/xhtml" in content_type:
             html = BeautifulSoup(response.content, "html.parser")
             ret = html.find("body").get_text()
             return ret + "---pagebreak---"
