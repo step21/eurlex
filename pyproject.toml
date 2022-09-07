@@ -1,6 +1,6 @@
 [tool.poetry]
 name = "pyeurlex"
-version = "0.2.1"
+version = "0.2.2"
 description = "This is a python module to create SPARQL queries for the EU Cellar repository, run them and subsequently download their data. Notably, it directly supports all resource types."
 authors = ["step21 <step21@devtal.de>"]
 packages = [
@@ -29,6 +29,7 @@ tox = "^3.25.1"
 pylint = "^2.15.0"
 coverage = "^6.4.4"
 poetry = "^1.2.0"
+poetry-bumpversion = "^0.1.0"
 
 
 [build-system]
@@ -39,4 +40,3 @@ build-backend = "poetry.core.masonry.api"
 format = "md"
 
 [tool.poetry_bumpversion.file."eurlex/__init__.py"]
-
