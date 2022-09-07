@@ -30,8 +30,6 @@ pylint = "^2.15.0"
 coverage = "^6.4.4"
 poetry = "^1.2.0"
 
-[tool.poetry.group.dev.dependencies]
-virtualenv = "^20.16.4"
 
 [build-system]
 requires = ["poetry-core>=1.0.0"]
