@@ -3,19 +3,20 @@
 """
 import os
 import re
+
 import requests
 import sparql_dataframe
-
 
 try:
     from typing import Literal, get_args
 except ImportError:
     from typing_extensions import Literal, get_args
-from bs4 import BeautifulSoup
-from pdfminer.high_level import extract_text
+
 import pandas as pd
-from halo import Halo
+from bs4 import BeautifulSoup
 from fire import Fire
+from halo import Halo
+from pdfminer.high_level import extract_text
 
 
 class Eurlex:
@@ -695,7 +696,7 @@ class Eurlex:
                     print("The CELEX url is: {}".format(url))
 
         if data_type == "title":
-            out = ""
+            out = ""  # should be dict but then should be changed in whole function
             try:
                 if __name__ == "__main__":
                     print("Getting title data...")
@@ -708,6 +709,11 @@ class Eurlex:
                 )
             except Exception as e:
                 print("There was an error during data retrieval: {}", e)
+                out = {
+                    "title": str(response.status_code),
+                    "parties": str(response.status_code),
+                    "case_number": str(response.status_code),
+                }
             if response.status_code == 200:
                 html = BeautifulSoup(response.text, "xml")
                 out = str(html.find("EXPRESSION_TITLE").get_text())
@@ -721,6 +727,8 @@ class Eurlex:
                         "parties": parties,
                         "case_number": case_number,
                     }
+                else:
+                    out = {"title": out}
                 if __name__ == "__main__":
                     print(out)
             else:
@@ -782,7 +790,7 @@ class Eurlex:
                         multiout += "NaN"
                 if __name__ == "__main__":
                     print(multiout)
-                out = multiout
+                out = multiout  # TODO stringify?
             elif response.status_code == 406:
                 out += "NaN" + str(
                     response.status_code
@@ -869,19 +877,21 @@ class Eurlex:
         if "text/html" in content_type or "application/xhtml" in content_type:
             html = BeautifulSoup(response.content, "html.parser")
             ret = html.find("body").get_text()
-            return ret + "---pagebreak---"
+            return ret + "---pagebreak---"  # TODO when is this really needed?
         elif "application/pdf" in content_type:
             text = extract_text(response.content)
             return text + "---pagebreak---"
         elif "application/msword" in content_type:
             # would probably use python-docx to implement this
             ret = "The Word format is not suppported at present"
-            print(ret)
+            if __name__ == "__main__":
+                print(ret)
             return ret
         # len('Error: unsupported content type: application/xhtml+xml;charset=UTF-8')
         else:
             ret = f"Error: unsupported content type: {content_type}"
-            print(ret)
+            if __name__ == "__main__":
+                print(ret)
             return ret
 
 
