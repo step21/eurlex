@@ -3,6 +3,12 @@
 
 ## Fixed
 
+- Fixing errant string return on `extract_metadata=True`.
+
+# 2022-09-07
+
+## Fixed
+
 - Added additional content types when getting text (xhtml should work now) and now also returns a dict for title data extraction if that somehow fails (before it returned http status code as a string).
 
 # 2022-09-05
