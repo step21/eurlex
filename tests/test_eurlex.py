@@ -1,4 +1,5 @@
 import pytest
+from pyparsing.helpers import Dict
 
 import eurlex
 from eurlex import __version__
@@ -25,6 +26,9 @@ def test_make_query(some_query):
     assert "PREFIX" in some_query
 
 
+"""tests diretive query and various options"""
+
+
 def test_make_query_directive(eurlex_inst):
     # TODO - split this so each test only tests on thing
     directive_query = eurlex_inst.make_query(
@@ -38,7 +42,81 @@ def test_make_query_directive(eurlex_inst):
         include_lbs=True,
     )
     assert directive_query
-    assert "PREFIX" in directive_query
+    assert "PREFIX" and "DIR" in directive_query
+
+
+"""Tests caselaw query and setting the options from directive query to False"""
+
+
+def test_make_query_caselaw(eurlex_inst):
+    caselaw_query = eurlex_inst.make_query(resource_type="caselaw")
+    assert len(caselaw_query) > 100
+    assert "PREFIX" in caselaw_query
+
+
+"""Tests caselaw_proper query"""
+
+
+def test_make_query_caselaw_proper(eurlex_inst):
+    caselaw_query = eurlex_inst.make_query(resource_type="caselaw_proper")
+    assert len(caselaw_query) > 100
+    assert "PREFIX" in caselaw_query
+
+
+def test_make_query_any(eurlex_inst):
+    query = eurlex_inst.make_query(resource_type="any")
+    assert len(query) > 100
+    assert "PREFIX" in query
+
+
+def test_make_query_regulation(eurlex_inst):
+    query = eurlex_inst.make_query(resource_type="regulation")
+    assert len(query) > 100
+    assert "REG" in query
+
+
+def test_make_query_decision(eurlex_inst):
+    query = eurlex_inst.make_query(resource_type="decision")
+    assert len(query) > 100
+    assert "DEC" in query
+
+
+def test_make_query_recommendation(eurlex_inst):
+    query = eurlex_inst.make_query(resource_type="recommendation")
+    assert len(query) > 100
+    assert "REC" in query
+
+
+def test_make_query_international_agreement(eurlex_inst):
+    query = eurlex_inst.make_query(resource_type="international_agreement")
+    assert len(query) > 100
+    assert "AGREE_INTERNATION" in query
+
+
+def test_make_query_ag_opinion(eurlex_inst):
+    query = eurlex_inst.make_query(resource_type="ag_opinion")
+    assert len(query) > 100
+    assert "OPIN_AG" in query
+
+
+def test_make_query_manual_failure(eurlex_inst):
+
+    with pytest.raises(Exception):
+        query = eurlex_inst.make_query(resource_type="manual")
+
+    # assert len(query) > 100
+
+
+def test_make_query_proposal(eurlex_inst):
+    query = eurlex_inst.make_query(resource_type="proposal")
+    assert len(query) > 100
+    assert "PROP" in query
+
+
+def test_make_query_national_implementation(eurlex_inst):
+    query = eurlex_inst.make_query(resource_type="national_implementation")
+    assert len(query) > 100
+    assert "MEAS_NATION_IMPL" in query
 
 
 def test_query_eurlex(some_query):
@@ -111,3 +189,15 @@ def test_get_data_no_extract(eurlex_inst):
     assert len(d["title"]) > 50
     assert d["parties"] == "NaN"
     assert d["case_number"] == "NaN"
+
+
+def test_get_data_pdf(eurlex_inst):
+    d = eurlex_inst.get_data(
+        "http://publications.europa.eu/resource/cellar/2ec360b3-e242-46db-9d5a-482d6f93dc12",
+        "text",
+    )
+    assert isinstance(d, str)
+    assert len(d) > 500
+
+
+# There was an error during data (text) acquisition at position index: 4928, resource: http://publications.europa.eu/resource/cellar/2ec360b3-e242-46db-9d5a-482d6f93dc12, error: Unsupported input type: <class 'bytes'>
