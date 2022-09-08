@@ -1,6 +1,16 @@
 
 # 2022-09-08
 
+## Added
+
+- Added more tests to `make_query`.
+
+## Fixed
+
+- Fixed pdf handling.
+
+# 2022-09-08
+
 ## Fixed
 
 - Fixed superfluous print statements from debugging.
