@@ -3,6 +3,7 @@
 """
 import os
 import re
+from io import BytesIO
 
 import requests
 import sparql_dataframe
@@ -892,7 +893,7 @@ class Eurlex:
             ret = html.find("body").get_text()
             return ret + "---pagebreak---"  # TODO when is this really needed?
         elif "application/pdf" in content_type:
-            text = extract_text(response.content)
+            text = extract_text(BytesIO(response.content))
             return text + "---pagebreak---"
         elif "application/msword" in content_type:
             # would probably use python-docx to implement this
