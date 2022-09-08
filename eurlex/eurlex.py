@@ -197,7 +197,10 @@ class Eurlex:
             assert (
                 len(manual_type) > 2
             ), f"{manual_type} is invalid - please specify a proper type from http://publications.europa.eu/resource/authority/resource-type"
-        if resource_type in ["caselaw", "manual", "any"] and include_court_procedure:
+        if (
+            not resource_type in ["caselaw", "manual", "any"]
+            and include_court_procedure
+        ):
             raise Exception(
                 "Resource and variable requested are incompatible"
             )  # improve exception handling
@@ -399,7 +402,11 @@ class Eurlex:
         if resource_type == "national_implementation":
             query += """ FILTER(?type=<http://publications.europa.eu/resource/authority/resource-type/MEAS_NATION_IMPL>)"""
         if resource_type == "manual" and manual_type and len(manual_type) > 1:
-            query += """ FILTER(?type=<http://publications.europa.eu/resource/authority/resource-type/" + manual_type + ">)"""
+            query += (
+                """ FILTER(?type=<http://publications.europa.eu/resource/authority/resource-type/"""
+                + manual_type
+                + """>)"""
+            )
         if include_corrigenda is False and resource_type != "caselaw":
             query += """ FILTER not exists{?work cdm:work_has_resource-type <http://publications.europa.eu/resource/authority/resource-type/CORRIGENDUM>}"""
         if include_celex:
