@@ -1,6 +1,12 @@
 
 # 2022-09-08
 
+## Fixed
+
+- Fixing manual type and court procedure check and corresponding tests.
+
+# 2022-09-08
+
 ## Added
 
 - Added more tests to `make_query`.
