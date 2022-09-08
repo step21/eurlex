@@ -69,4 +69,45 @@ def test_get_data(eurlex_inst):
     # url, data_type, notice, languages, include_breaks
     d = eurlex_inst.get_data("61962CJ0026", data_type="text")
     assert d
-    assert len(d) > 100
+    assert len(d) > 500
+
+
+"""Test extraction of metadata where extraction should work"""
+
+
+def test_get_data_extract_succeed(eurlex_inst):
+    d = eurlex_inst.get_data(
+        "http://publications.europa.eu/resource/cellar/7979a0c9-5699-4b63-b48d-13d8f1a6cc22",
+        "title",
+        extract_caselaw_metadata=True,
+    )
+    assert d["parties"] != "NaN"
+    assert d["case_number"] != "NaN"
+
+
+"""Test data extraction where it is expected to fail"""
+
+
+def test_get_data_extract_fail(eurlex_inst):
+    d = eurlex_inst.get_data(
+        "http://publications.europa.eu/resource/cellar/a01cca15-ed79-4ea3-bd7a-5f3aa57cbcda",
+        "title",
+        extract_caselaw_metadata=True,
+    )
+    assert d["title"] != "NaN"
+    assert d["parties"] == "NaN"
+    assert d["case_number"] == "NaN"
+
+
+"""Testing getting the title without metadata extraction"""
+
+
+def test_get_data_no_extract(eurlex_inst):
+    d = eurlex_inst.get_data(
+        "http://publications.europa.eu/resource/cellar/7979a0c9-5699-4b63-b48d-13d8f1a6cc22",
+        "title",
+        extract_caselaw_metadata=False,
+    )
+    assert len(d["title"]) > 50
+    assert d["parties"] == "NaN"
+    assert d["case_number"] == "NaN"
