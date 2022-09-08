@@ -717,7 +717,7 @@ class Eurlex:
             if response.status_code == 200:
                 html = BeautifulSoup(response.text, "xml")
                 out = str(html.find("EXPRESSION_TITLE").get_text())
-                print(out)
+
                 if extract_caselaw_metadata:
                     if __name__ == "__main__":
                         print("Extracting metadata...")
@@ -725,7 +725,8 @@ class Eurlex:
                         "(?s).*#.*#.*$",
                         out,  # added (?s) singleline flag to also match newlines which are sometimes a part of the text
                     ):  # "#" in out: TODO - could improve by trying to match sub-parts based on keywords or structure to their relevant parts, even when there are only 2
-                        print("Extracting metadata after matching #")
+                        if __name__ == "__main__":
+                            print("Extracting metadata after matching #")
                         title = out.split("#")[0].strip()
                         parties = out.split("#")[1].strip().strip(".")
                         case_number = out.split("#")[2].strip().strip(".")
