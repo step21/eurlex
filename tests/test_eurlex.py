@@ -1,3 +1,5 @@
+import os
+
 import pytest
 from pyparsing.helpers import Dict
 
@@ -130,9 +132,36 @@ def test_make_query_directive_options(eurlex_inst):
         include_author=True,
         include_citations=True,
         include_directory=True,
-        include_sector=True,
+        include_sector=9,
         include_proposal=True,
     )
+    assert query
+    assert "PREFIX" in query
+
+
+def test_make_query_sector(eurlex_inst):
+    query = eurlex_inst.make_query(
+        resource_type="directive",
+        include_directory=True,
+        include_sector=True,
+        include_proposal=True,
+        directory="04.10.30.00",
+        limit=10,
+    )
+    assert query
+    assert "04.10.30.00" in query
+
+
+def test_make_query_sector(eurlex_inst):
+    query = eurlex_inst.make_query(
+        resource_type="directive",
+        include_directory=True,
+        sector=9,
+        include_proposal=True,
+        limit=10,
+    )
+    assert query
+    assert "9" in query
 
 
 def test_make_query_proposal(eurlex_inst):
@@ -226,6 +255,53 @@ def test_get_data_pdf(eurlex_inst):
     )
     assert isinstance(d, str)
     assert len(d) > 500
+
+
+"""Test extraction of ids"""
+
+
+def test_get_data_ids(eurlex_inst):
+    d = eurlex_inst.get_data(
+        "http://publications.europa.eu/resource/cellar/7979a0c9-5699-4b63-b48d-13d8f1a6cc22",
+        "ids",
+    )
+    assert d
+    assert len(d) > 1
+
+
+def test_download_xml(eurlex_inst):
+    f = eurlex_inst.download_xml(
+        "http://publications.europa.eu/resource/cellar/7979a0c9-5699-4b63-b48d-13d8f1a6cc22",
+        notice="branch",
+        filename="text.xml",
+    )
+    assert f
+    assert "branch" in f
+    assert os.path.isfile("test.xml")
+
+
+def test_download_xml(eurlex_inst):
+    f = eurlex_inst.download_xml(
+        "http://publications.europa.eu/resource/cellar/7979a0c9-5699-4b63-b48d-13d8f1a6cc22",
+        notice="tree",
+        filename="test.xml",
+    )
+    assert f
+    assert "tree" in f
+    assert os.path.isfile("test.xml")
+
+
+def test_download_xml(eurlex_inst):
+    f = eurlex_inst.download_xml(
+        "http://publications.europa.eu/resource/cellar/7979a0c9-5699-4b63-b48d-13d8f1a6cc22",
+        notice="object",
+    )
+    filename = os.path.basename(
+        "http://publications.europa.eu/resource/cellar/7979a0c9-5699-4b63-b48d-13d8f1a6cc22"
+    )
+    assert f
+    assert "object" in f
+    assert os.path.isfile(filename)
 
 
 # There was an error during data (text) acquisition at position index: 4928, resource: http://publications.europa.eu/resource/cellar/2ec360b3-e242-46db-9d5a-482d6f93dc12, error: Unsupported input type: <class 'bytes'>
