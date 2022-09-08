@@ -1,4 +1,14 @@
 
+# 2022-09-08
+
+## Added
+
+- Added more tests for `get_data`.
+
+## Fixed
+
+- Fixed messed up indentation for `get_data`.
+
 # 2022-09-07
 
 ## Fixed
