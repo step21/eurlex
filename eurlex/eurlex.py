@@ -293,7 +293,7 @@ class Eurlex:
             query += (
                 """?work cdm:resource_legal_id_sector ?sector.
                     FILTER(str(?sector)='"""
-                + sector
+                + str(sector)
                 + "')"
             )
         if resource_type == "directive":
