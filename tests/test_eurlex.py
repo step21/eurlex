@@ -112,6 +112,7 @@ def test_make_query_manual_failure(eurlex_inst):
         resource_type="manual",
         manual_type="JUDG",
         include_advocate_general=True,
+        include_court_procedure=True,
         include_court_formation=True,
         include_judge_rapporteur=True,
         include_court_scholarship=True,
@@ -125,7 +126,6 @@ def test_make_query_directive_options(eurlex_inst):
     query = eurlex_inst.make_query(
         resource_type="directive",
         include_eurovoc=True,
-        include_court_procedure=True,
         include_ecli=True,
         include_author=True,
         include_citations=True,
