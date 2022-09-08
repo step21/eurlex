@@ -1,6 +1,12 @@
 
 # 2022-09-08
 
+## Fixed
+
+- Fixed superfluous print statements from debugging.
+
+# 2022-09-08
+
 ## Added
 
 - Added more tests for `get_data`.
