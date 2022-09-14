@@ -3,6 +3,12 @@
 
 ## Added
 
+- Added the option to parse curia case lists..
+
+# 2022-09-14
+
+## Added
+
 - Added tests and excluded output for cli usage from coverage.
 
 ## Fixed
