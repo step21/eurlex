@@ -1,4 +1,14 @@
 
+# 2022-09-14
+
+## Added
+
+- Added tests and excluded output for cli usage from coverage.
+
+## Fixed
+
+- Fixing sector argument.
+
 # 2022-09-08
 
 ## Fixed
