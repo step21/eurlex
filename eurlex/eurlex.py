@@ -915,6 +915,108 @@ class Eurlex:
                 print(ret)
             return ret
 
+    "Parse curia lists"
+
+    def parse_curia(self, case_lists: list = "all", limit=None):
+        # def curia_cases(self, case_lists="all", parse=True):
+        """
+        Harvests data from lists of EU court cases from curia.europa.eu.
+        CELEX identifiers are extracted from hyperlinks where available.
+
+        Parameters:
+        -----------
+        case_lists
+            Data to be scraped from four separate lists of cases maintained by Curia, defaults to "all"
+            which contains cases from Court of Justice, General Court and Civil Service Tribunal.
+            parse. If True, references to cases and appeals are parsed out from `case_info` into separate columns
+
+        @return
+        A data frame containing case identifiers and information as character columns. Where the case id
+        contains a hyperlink to Eur-Lex, the CELEX identifier is retrieved as well.
+        """
+        print("Selected case lists are {}".format(str(case_lists)))
+        url_ecj_old = "https://curia.europa.eu/en/content/juris/c1_juris.htm"
+        url_ecj_new = "https://curia.europa.eu/en/content/juris/c2_juris.htm"
+        url_gc_all = "https://curia.europa.eu/en/content/juris/t2_juris.htm"
+        url_cst_all = "https://curia.europa.eu/en/content/juris/f1_juris.htm"
+        # Define lists of cases to be scraped
+        valid_lists = ["ecj", "gc", "cst"]
+        # TODO make into Literal properly - valid_lists = Literal["ecj", "gc", "cst"]
+        scrape_urls = []
+        # for l in case_lists:
+        if "ecj" in case_lists or case_lists == "all":
+            scrape_urls.append(url_ecj_old)
+            scrape_urls.append(url_ecj_new)
+        elif "gc" in case_lists or case_lists == "all":
+            scrape_urls.append(url_gc_all)
+        elif "cst" in case_lists or case_lists == "all":
+            scrape_urls.append(url_cst_all)
+        else:
+            print("You should not be here")
+        return self.curia_scraper(scrape_urls, limit)
+
+    def curia_scraper(self, urls, limit):
+        multiple_lists = {}
+        for u in urls:
+            # response = requests.get(u)
+            response = requests.get(u)
+            soup = BeautifulSoup(response.text, "html.parser")
+            table = soup.find("table").findAll(
+                "tr",
+            )
+            records = {}
+            for index in range(0, len(table)):
+                if 1 <= index <= limit:
+                    records[index] = {}
+                    for td in table[index]:
+                        try:
+                            records[index]["case_number"] = td.find("a")["name"]
+                        except:
+                            pass
+                        try:
+                            records[index]["case_info"] = td.find("i").text
+                        except:
+                            pass
+                        try:
+                            # print(td.find("a").next_element.a["href"])
+                            records[index]["link"] = td.find("a").next_element.a[
+                                "href"
+                            ][24:-19]
+                        except:
+                            pass
+                        try:
+                            ecli = re.search(
+                                r"^.+?(ECLI\:EU\:\w\:[0-9]{4}:[0-9]).*?$",
+                                records[index]["case_info"],
+                            )
+                            records[index]["ecli"] = ecli.group(1)
+                        except:
+                            pass
+                        try:
+                            celex = re.search(
+                                r"^http.+?CELEX.+numdoc\=(\w+?)$",
+                                records[index]["link"],
+                            )
+                            records[index]["celex"] = celex.group(1)
+                        except:
+                            pass
+                        try:
+                            curia_docs = requests.get(records[index]["link"])
+                        except:
+                            if __name__ == "__main__":
+                                print(
+                                    f"There was an error retrieving the document: {index}"
+                                )
+                        try:
+                            curia_html = BeautifulSoup(curia_docs.text, "html.parser")
+                            records[index]["case_text"] = curia_html.find(
+                                "div", attrs={"id": "TexteOnly"}, recursive=True
+                            ).text
+                        except:
+                            pass
+            multiple_lists[u] = records
+        return multiple_lists
+
 
 # The main function. It uses the fire framework to expose the functions of the module on the command line
 def main(argv=None):
