@@ -42,4 +42,4 @@ jobs:
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
-          scriv github-release
+          scriv github-release --verbosity=DEBUG
