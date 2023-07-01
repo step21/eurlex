@@ -13,7 +13,7 @@ This is a python module to create SPARQL queries for the EU Cellar repository, r
 Import and instantiate the moduel
 
 ```
-from eurlex import Eurlex
+from eurlex.eurlex import Eurlex
 eur = Eurlex()
 ```
 
