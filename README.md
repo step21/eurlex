@@ -13,7 +13,7 @@ This is a python module to create SPARQL queries for the EU Cellar repository, r
 Import and instantiate the moduel
 
 ```
-from eurlex import Eurlex
+from eurlex.eurlex import Eurlex
 eur = Eurlex()
 ```
 
@@ -41,7 +41,7 @@ print(x)
 
 To get data associated with an identifier, use `get_data()`. This will return the data as a string,
 ```
-d = eur.get_data("http://publications.europa.eu/resource/celex/32016R0679", type="text")
+d = eur.get_data("http://publications.europa.eu/resource/celex/32016R0679", data_type="text")
 print(d)
 ```
 
