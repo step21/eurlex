@@ -266,7 +266,7 @@ class Eurlex:
         if resource_type != "any":
             query += " where{ ?work cdm:work_has_resource-type ?type."
         if directory:
-            assert isinstance(directory, "str"), "directory code must be of type string"
+            assert isinstance(directory, str), "directory code must be of type string"
             query += (
                 """ VALUES (?value)
                     { (<http://publications.europa.eu/resource/authority/fd_555/"""
