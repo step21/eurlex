@@ -2,19 +2,18 @@
 # See https://pre-commit.com/hooks.html for more hooks
 repos:
   - repo: https://github.com/pre-commit/pre-commit-hooks
-    rev: v4.0.1
+    rev: v5.0.0
     hooks:
       - id: check-toml
       - id: check-yaml
       - id: end-of-file-fixer
       - id: mixed-line-ending
   - repo: https://github.com/psf/black
-    rev: 22.3.0
+    rev: 24.10.0
     hooks:
       - id: black
-        args: ["--check"]
   - repo: https://github.com/PyCQA/isort
-    rev: 5.10.1
+    rev: 5.13.2
     hooks:
       - id: isort
-        args: ["--check", "--profile", "black"]
+        args: ["--profile", "black"]

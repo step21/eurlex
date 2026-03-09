@@ -1,19 +1,15 @@
+# pylint: disable=line-too-long,bare-except,invalid-name,too-many-lines
 """
 * Python module to create eurlex cellar queries, query eurlex for metadata of documents with sparql queries, and subsequently download associated documents and notices.
 """
 import os
 import re
 from io import BytesIO
-
-import requests
-import sparql_dataframe
-
-try:
-    from typing import Literal, get_args
-except ImportError:
-    from typing_extensions import Literal, get_args
+from typing import Literal, get_args
 
 import pandas as pd
+import requests
+import sparql_dataframe
 from bs4 import BeautifulSoup
 from fire import Fire
 from halo import Halo
@@ -49,6 +45,7 @@ class Eurlex:
         "proposal",
         "national_implementation",
     ]
+
     # This method constructs a SPARQL query to query the EU Cellar endpoint """
     def make_query(
         self,
@@ -525,6 +522,7 @@ class Eurlex:
     notice_type: Literal = ["tree", "branch", "object"]
 
     "Downloads an XML notice of a given type, based on a Cellar resource"
+
     # TODO consolidate the repetitive parts of get_data and download_xml
     def download_xml(
         self,
