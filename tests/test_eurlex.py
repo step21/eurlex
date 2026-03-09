@@ -7,6 +7,8 @@ import eurlex
 from eurlex import __version__
 from eurlex.eurlex import Eurlex
 
+pytestmark = pytest.mark.integration
+
 limit = 10
 
 

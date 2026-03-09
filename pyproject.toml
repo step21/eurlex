@@ -40,4 +40,9 @@ format = "md"
 
 [tool.poetry_bumpversion.file."eurlex/__init__.py"]
 
+[tool.pytest.ini_options]
+markers = [
+    "integration: tests that require network access to the EU Cellar API",
+]
+
 # This is a test

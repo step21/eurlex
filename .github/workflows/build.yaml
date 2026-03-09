@@ -31,7 +31,12 @@ jobs:
 
       - name: Run tox for testing
         run: tox
-      
+
+      - name: Run integration tests (allowed to fail)
+        if: "matrix.python-version == '3.12'"
+        continue-on-error: true
+        run: tox -e integration
+
       - name: Run tox for coverage
         if: "matrix.python-version == '3.12'"
         run: tox -e coverage
